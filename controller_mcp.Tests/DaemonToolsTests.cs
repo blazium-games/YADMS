@@ -53,7 +53,7 @@ namespace controller_mcp.Tests
                 var msg = ((TextContentBlock)result.Content[0]).Text;
                 // GitHub Actions runners sometimes restrict Registry writes. Ignore environmental failures.
                 if (msg.Contains("Access to the registry key") || msg.Contains("denied") || msg.Contains("Unauthorized")) return;
-                Assert.True(false, $"InstallAsService returned error: {msg}");
+                Assert.Fail($"InstallAsService returned error: {msg}");
             }
             
             Assert.Contains("Successfully registered", ((TextContentBlock)result.Content[0]).Text);
