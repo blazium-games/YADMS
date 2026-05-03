@@ -383,15 +383,16 @@ namespace controller_mcp
             Button btnInstallNpcap = new Button { Text = "Install Npcap", Location = new Point(200, 286), Width = 100 };
             
             Action updateNpcapStatus = () => {
-                int deviceCount = 0;
-                try { deviceCount = SharpPcap.CaptureDeviceList.Instance.Count; } catch { }
-                if (deviceCount > 0) {
+                bool isInstalled = System.IO.File.Exists(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Npcap", "wpcap.dll"));
+                if (isInstalled) {
                     lblNpcapStatus.Text = "Npcap Driver: Installed";
                     lblNpcapStatus.ForeColor = Color.Green;
-                    btnInstallNpcap.Enabled = false;
+                    btnInstallNpcap.Text = "Uninstall Npcap";
+                    btnInstallNpcap.Enabled = true;
                 } else {
                     lblNpcapStatus.Text = "Npcap Driver: Missing";
                     lblNpcapStatus.ForeColor = Color.Red;
+                    btnInstallNpcap.Text = "Install Npcap";
                     btnInstallNpcap.Enabled = true;
                 }
             };
@@ -399,26 +400,31 @@ namespace controller_mcp
             updateNpcapStatus();
 
             btnInstallNpcap.Click += async (s, e) => {
+                bool isInstalling = btnInstallNpcap.Text.StartsWith("Install");
                 btnInstallNpcap.Enabled = false;
-                btnInstallNpcap.Text = "Installing...";
+                btnInstallNpcap.Text = isInstalling ? "Installing..." : "Uninstalling...";
                 try {
-                    await controller_mcp.Features.Tools.PcapTools.InstallNpcap();
+                    if (isInstalling) {
+                        await controller_mcp.Features.Tools.PcapTools.InstallNpcap();
+                    } else {
+                        await controller_mcp.Features.Tools.PcapTools.UninstallNpcap();
+                    }
                     
                     bool isInstalled = System.IO.File.Exists(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Npcap", "wpcap.dll"));
-                    if (isInstalled) {
-                        lblNpcapStatus.Text = "Npcap Driver: Installed";
-                        lblNpcapStatus.ForeColor = Color.Green;
-                        btnInstallNpcap.Enabled = false;
+                    
+                    if (isInstalling && isInstalled) {
                         MessageBox.Show("Npcap installation completed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    } else {
+                    } else if (isInstalling && !isInstalled) {
                         MessageBox.Show("Npcap installation was aborted or failed.", "Installation Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        btnInstallNpcap.Text = "Install Npcap";
-                        btnInstallNpcap.Enabled = true;
+                    } else if (!isInstalling && !isInstalled) {
+                        MessageBox.Show("Npcap uninstallation completed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    } else if (!isInstalling && isInstalled) {
+                        MessageBox.Show("Npcap uninstallation was aborted or failed.", "Uninstallation Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 } catch (Exception ex) {
                     MessageBox.Show($"Failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    btnInstallNpcap.Text = "Install Npcap"; 
-                    btnInstallNpcap.Enabled = true; 
+                } finally {
+                    updateNpcapStatus();
                 }
             };
 

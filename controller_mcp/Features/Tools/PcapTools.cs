@@ -214,6 +214,60 @@ namespace controller_mcp.Features.Tools
             });
         }
 
+        [McpServerTool, Description("Uninstalls the Npcap driver. Must be run as Administrator if UAC prompts.")]
+        public static async Task<CallToolResult> UninstallNpcap()
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    string uninstallerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Npcap", "uninstall.exe");
+                    if (!File.Exists(uninstallerPath))
+                    {
+                        uninstallerPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Npcap", "uninstall.exe");
+                    }
+
+                    if (!File.Exists(uninstallerPath))
+                    {
+                        return new CallToolResult { IsError = true, Content = new List<ContentBlock> { new TextContentBlock { Text = "Uninstaller not found. Npcap may not be installed." } } };
+                    }
+
+                    AuditLogger.LogSystemEvent("NpcapInstaller", "Launching Npcap uninstaller...");
+
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = uninstallerPath,
+                        UseShellExecute = true,
+                        Verb = "runas" // Elevate privileges
+                    };
+                    
+                    var proc = Process.Start(psi);
+                    if (proc != null)
+                    {
+                        AuditLogger.LogSystemEvent("NpcapInstaller", "Waiting for user to complete the uninstallation wizard...");
+                        proc.WaitForExit();
+                        
+                        bool isInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Npcap", "wpcap.dll"));
+                        if (!isInstalled)
+                        {
+                            AuditLogger.LogSystemEvent("NpcapInstaller", "Success! Npcap driver was successfully uninstalled.");
+                        }
+                        else
+                        {
+                            AuditLogger.LogSystemEvent("NpcapInstaller", "Npcap uninstallation aborted or failed. Driver still found.");
+                        }
+                    }
+
+                    return new CallToolResult { Content = new List<ContentBlock> { new TextContentBlock { Text = "Npcap driver uninstallation completed. Please check logs for status." } } };
+                }
+                catch (Exception ex)
+                {
+                    AuditLogger.LogSystemEvent("NpcapInstaller", $"Uninstallation failed: {ex.Message}");
+                    return new CallToolResult { IsError = true, Content = new List<ContentBlock> { new TextContentBlock { Text = $"Failed to uninstall Npcap: {ex.Message}" } } };
+                }
+            });
+        }
+
         [McpServerTool, Description("Starts a background network packet capture on a specific device index. You can provide an optional BPF filter (e.g. 'tcp port 80') and an optional target_pid. If target_pid is > 0, it will only capture traffic owned by that Windows Process ID.")]
         public static CallToolResult StartPacketCapture(int device_index, string filter = "", int target_pid = -1)
         {
