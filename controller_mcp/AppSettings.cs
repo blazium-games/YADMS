@@ -11,6 +11,8 @@ namespace controller_mcp
         public string FFmpegPath { get; set; } = "";
         public bool EnableDebugLogging { get; set; } = false;
         public bool MasterKeyExported { get; set; } = false;
+        public bool EnableAutoUpdate { get; set; } = true;
+        public DateTime LastUpdateCheck { get; set; } = DateTime.MinValue;
 
         public static string ConfigDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ControllerMCP");
         public static string ConfigPath => Path.Combine(ConfigDir, "config.json");

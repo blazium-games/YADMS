@@ -11,11 +11,14 @@ $skus = @(
     "Bundled_Hacked"
 )
 
-$isccPath = "C:\Program Files (x86)\Inno Setup 6\iscc.exe"
-
-if (-not (Test-Path $isccPath)) {
-    Write-Error "Inno Setup Compiler (iscc.exe) not found at $isccPath"
-    exit 1
+$isccPath = "iscc"
+if (-not (Get-Command $isccPath -ErrorAction SilentlyContinue)) {
+    # Fallback to hardcoded standard directory if not in PATH
+    $isccPath = "C:\Program Files (x86)\Inno Setup 6\iscc.exe"
+    if (-not (Test-Path $isccPath)) {
+        Write-Error "Inno Setup Compiler (iscc.exe) not found in PATH or at $isccPath"
+        exit 1
+    }
 }
 
 $version = (Get-Content "version.txt" -Raw).Trim()

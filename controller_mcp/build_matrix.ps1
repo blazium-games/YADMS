@@ -21,6 +21,7 @@ foreach ($sku in $skus) {
     # 1. Build main project
     $outPath = Join-Path $PWD "artifacts\$($sku.Name)"
     dotnet build ".\controller_mcp.csproj" -p:IncludeFfmpeg=$($sku.FFmpeg) -p:IncludeGameHacking=$($sku.Hack) -c Release -o $outPath
+    dotnet build ".\controller_mcp.Updater\controller_mcp.Updater.csproj" -c Release -o $outPath
     
     # 2. Build test project
     dotnet build "..\controller_mcp.Tests\controller_mcp.Tests.csproj" -p:IncludeGameHacking=$($sku.Hack) -c Release

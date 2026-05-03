@@ -26,6 +26,7 @@ namespace controller_mcp
         private bool _isMirror;
         private NotifyIcon _notifyIcon;
         private System.Windows.Forms.Timer _uiTimer;
+        private System.Windows.Forms.Timer _updateTimer;
 
         public Form1(bool isDaemon = false)
         {
@@ -69,9 +70,11 @@ namespace controller_mcp
             // Stop UI timers
             _uiTimer?.Stop();
             _uiTimer?.Dispose();
+            _updateTimer?.Stop();
+            _updateTimer?.Dispose();
 
             // Cleanly shutdown the background server and all active tools
-            StopServer();
+            GracefulShutdown();
         }
 
         private void SetupTabs()
@@ -221,6 +224,78 @@ namespace controller_mcp
             };
 
             tab.Controls.Add(btnSave);
+
+            // AUTO UPDATER UI
+            Label lblCurrentVer = new Label { Text = $"Current Version: {VersionInfo.CurrentVersion}", Location = new Point(360, 140), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            Label lblLatestVer = new Label { Text = "Latest Version: Checking...", Location = new Point(360, 160), AutoSize = true };
+            Label lblLastChecked = new Label { Text = $"Last Checked: {(settings.LastUpdateCheck > DateTime.MinValue ? settings.LastUpdateCheck.ToString("g") : "Never")}", Location = new Point(360, 180), AutoSize = true };
+            
+            CheckBox chkAutoUpdate = new CheckBox { Text = "Enable Auto-Updater (Checks every 30 mins)", Location = new Point(360, 200), AutoSize = true, Checked = settings.EnableAutoUpdate };
+            chkAutoUpdate.CheckedChanged += (s, e) => {
+                settings.EnableAutoUpdate = chkAutoUpdate.Checked;
+                settings.Save();
+            };
+
+            Button btnCheckUpdate = new Button { Text = "Check For Updates", Location = new Point(360, 225), Width = 150 };
+
+            Action performUpdateCheck = async () => {
+                btnCheckUpdate.Enabled = false;
+                btnCheckUpdate.Text = "Checking...";
+                lblLatestVer.Text = "Latest Version: Checking...";
+                try {
+                    var (available, latestVersion, downloadUrl, errorReason) = await controller_mcp.Features.Tools.UpdateManager.CheckForUpdatesAsync();
+                    
+                    settings.LastUpdateCheck = DateTime.Now;
+                    settings.Save();
+                    lblLastChecked.Text = $"Last Checked: {settings.LastUpdateCheck:g}";
+                    
+                    if (!string.IsNullOrEmpty(errorReason)) {
+                        lblLatestVer.Text = $"Latest Version: {errorReason}";
+                    } else if (available) {
+                        lblLatestVer.Text = $"Latest Version: {latestVersion ?? "Unknown"}";
+                        if (!string.IsNullOrEmpty(downloadUrl)) {
+                            controller_mcp.Features.Tools.AuditLogger.LogSystemEvent("Updater", $"Update {latestVersion} found. Initiating silent download: {downloadUrl}");
+                            lblLatestVer.Text += " (Downloading...)";
+                            bool success = await controller_mcp.Features.Tools.UpdateManager.DownloadAndInstallUpdateAsync(downloadUrl, latestVersion);
+                            if (!success) lblLatestVer.Text = $"Latest Version: {latestVersion} (Download Failed)";
+                        } else {
+                            lblLatestVer.Text = $"Latest Version: {latestVersion} (No asset for {controller_mcp.Features.Tools.UpdateManager.GetCurrentSku()})";
+                        }
+                    } else {
+                        lblLatestVer.Text = $"Latest Version: {VersionInfo.CurrentVersion} (Up to date)";
+                    }
+                } catch (Exception ex) {
+                    lblLatestVer.Text = "Latest Version: Error";
+                    controller_mcp.Features.Tools.AuditLogger.Log(controller_mcp.Features.Tools.LogLevel.ERROR, "System", $"Update check failed: {ex.Message}");
+                } finally {
+                    btnCheckUpdate.Text = "Check For Updates";
+                    btnCheckUpdate.Enabled = true;
+                }
+            };
+
+            btnCheckUpdate.Click += (s, e) => performUpdateCheck();
+
+            tab.Controls.Add(lblCurrentVer);
+            tab.Controls.Add(lblLatestVer);
+            tab.Controls.Add(lblLastChecked);
+            tab.Controls.Add(chkAutoUpdate);
+            tab.Controls.Add(btnCheckUpdate);
+
+            _updateTimer = new System.Windows.Forms.Timer { Interval = 30 * 60 * 1000 }; // 30 minutes
+            _updateTimer.Tick += (s, e) => {
+                if (settings.EnableAutoUpdate) {
+                    performUpdateCheck();
+                }
+            };
+            _updateTimer.Start();
+            
+            // Do an initial check 5 seconds after startup if enabled
+            _ = Task.Run(async () => {
+                await Task.Delay(5000);
+                if (settings.EnableAutoUpdate && InvokeRequired) {
+                    Invoke(new Action(() => performUpdateCheck()));
+                }
+            });
 
             Button btnExportKey = new Button { Text = "Export Master Key", Location = new Point(20, 210), Width = 150 };
             btnExportKey.Click += (s, e) => {
@@ -428,12 +503,12 @@ namespace controller_mcp
                 }
             };
 
-            AppDomain.CurrentDomain.ProcessExit += (s, e) => StopServer();
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => GracefulShutdown();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            StopServer();
+            GracefulShutdown();
             base.OnFormClosed(e);
         }
 
@@ -550,16 +625,16 @@ namespace controller_mcp
             catch (Exception ex)
             {
                 Log($"Failed to start MCP Server: {ex.Message}");
-                StopServer();
+                GracefulShutdown();
             }
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            StopServer();
+            GracefulShutdown();
         }
 
-        private void StopServer()
+        public void GracefulShutdown()
         {
             try
             {

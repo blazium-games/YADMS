@@ -28,11 +28,12 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "artifacts\{#SkuName}\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "artifacts\{#SkuName}\version.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "artifacts\{#SkuName}\YADMS_Updater.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; WorkingDir: "{app}"; Flags: nowait postinstall
 Filename: "https://discord.gg/Vbq4zGdaVs"; Description: "Join the Discord Server"; Flags: shellexec postinstall skipifsilent
