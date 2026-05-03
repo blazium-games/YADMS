@@ -21,7 +21,6 @@ namespace controller_mcp.Tests
         public async Task BroadcastLog_SafelyHandlesDisconnectedClients()
         {
             // Start server
-            bool messageReceived = false;
             IpcManager.StartServer(cmd => { });
 
             // Allow server to initialize

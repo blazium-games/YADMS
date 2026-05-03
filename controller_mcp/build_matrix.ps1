@@ -18,6 +18,21 @@ foreach ($sku in $skus) {
     Write-Host " - IncludeGameHacking = $($sku.Hack)"
     Write-Host "----------------------------------------"
     
+    # Download FFmpeg if needed for Bundled builds
+    if ($sku.FFmpeg -eq "true" -and -not (Test-Path "ffmpeg.exe")) {
+        Write-Host " Downloading FFmpeg for Bundled SKU..."
+        $ffmpegUrl = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+        $zipPath = "ffmpeg.zip"
+        Invoke-WebRequest -Uri $ffmpegUrl -OutFile $zipPath
+        Expand-Archive -Path $zipPath -DestinationPath "ffmpeg_temp" -Force
+        $exePath = Get-ChildItem -Path "ffmpeg_temp" -Filter "ffmpeg.exe" -Recurse | Select-Object -First 1
+        if ($exePath) {
+            Copy-Item $exePath.FullName -Destination "ffmpeg.exe" -Force
+        }
+        Remove-Item $zipPath -Force
+        Remove-Item "ffmpeg_temp" -Recurse -Force
+    }
+
     # 1. Build main project
     $outPath = Join-Path $PWD "artifacts\$($sku.Name)"
     dotnet build ".\controller_mcp.csproj" -p:IncludeFfmpeg=$($sku.FFmpeg) -p:IncludeGameHacking=$($sku.Hack) -c Release -o $outPath

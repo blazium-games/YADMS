@@ -23,7 +23,7 @@ namespace controller_mcp.Tests
         }
 
         [Fact]
-        public void ResumeRecording_WithValidPid_ReattachesSuccessfully()
+        public async System.Threading.Tasks.Task ResumeRecording_WithValidPid_ReattachesSuccessfully()
         {
             // Arrange
             string testId = Guid.NewGuid().ToString();
@@ -62,7 +62,7 @@ namespace controller_mcp.Tests
             Assert.Contains("running", ((ModelContextProtocol.Protocol.TextContentBlock)statusResult.Content[0]).Text);
 
             // Cleanup
-            var stopRes = StatefulRecordingTools.StopRecording(testId).Result;
+            var stopRes = await StatefulRecordingTools.StopRecording(testId);
             if (!proc.HasExited)
             {
                 proc.Kill();

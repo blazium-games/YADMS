@@ -11,21 +11,21 @@ namespace controller_mcp.Tests
         [Fact]
         public async Task ComputeFileHash_NonExistentFile_ReturnsError()
         {
-            var res = await DeveloperTools.ComputeFileHash("C:\\invalid_file_12345.txt");
+            var res = await DeveloperTools.ComputeFileHash(System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.Guid.NewGuid().ToString() + ".txt"));
             Assert.True(res.IsError == true);
         }
 
         [Fact]
         public async Task ZipDirectory_NonExistentDir_ReturnsError()
         {
-            var res = await DeveloperTools.ZipDirectory("C:\\invalid_dir_12345", "C:\\out.zip");
+            var res = await DeveloperTools.ZipDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.Guid.NewGuid().ToString()), "C:\\out.zip");
             Assert.True(res.IsError == true);
         }
 
         [Fact]
         public async Task UnzipArchive_NonExistentZip_ReturnsError()
         {
-            var res = await DeveloperTools.UnzipArchive("C:\\invalid_zip_12345.zip", "C:\\out");
+            var res = await DeveloperTools.UnzipArchive(System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.Guid.NewGuid().ToString() + ".zip"), "C:\\out");
             Assert.True(res.IsError == true);
         }
         [Fact]

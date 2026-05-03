@@ -19,6 +19,7 @@ namespace controller_mcp.Updater
             }
 
             int targetPid = -1;
+            string installerPath = string.Empty;
 
             for (int i = 0; i < args.Length; i++)
             {
