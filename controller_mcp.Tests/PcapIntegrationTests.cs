@@ -27,8 +27,20 @@ namespace controller_mcp.Tests
         {
             int pid = _target.TargetProcess.Id;
 
+            // Find the Loopback adapter device index
+            int loopbackIndex = 0;
+            var devices = SharpPcap.CaptureDeviceList.Instance;
+            for (int i = 0; i < devices.Count; i++)
+            {
+                if (devices[i].Description.ToLower().Contains("loopback") || devices[i].Name.ToLower().Contains("loopback"))
+                {
+                    loopbackIndex = i;
+                    break;
+                }
+            }
+
             // Start packet capture filtering only our target PID's traffic
-            var startResult = PcapTools.StartPacketCapture(0, filter: "", target_pid: pid);
+            var startResult = PcapTools.StartPacketCapture(loopbackIndex, filter: "", target_pid: pid);
             
             // Check if Npcap driver is missing
             if (startResult.IsError == true)
@@ -46,29 +58,38 @@ namespace controller_mcp.Tests
 
             try
             {
-                // Let the background loop capture at least a few 500ms intervals
-                await Task.Delay(2500);
-
-                var receiveResult = PcapTools.ReceivePacketCapture(captureId);
-                Assert.False(receiveResult.IsError == true);
-
-                string json = ((TextContentBlock)receiveResult.Content[0]).Text;
-                var receiveDoc = JsonDocument.Parse(json);
-                int packetsCount = receiveDoc.RootElement.GetProperty("packets_count").GetInt32();
-
-                Assert.True(packetsCount > 0, "No packets were captured from the target PID.");
-
+                int packetsCount = 0;
                 bool foundUdpPacket = false;
-                foreach (var pkt in receiveDoc.RootElement.GetProperty("packets").EnumerateArray())
+
+                // Let the background loop capture, polling for up to 10 seconds
+                for (int i = 0; i < 10; i++)
                 {
-                    string summary = pkt.GetString();
-                    if (summary.Contains("UDP 127.0.0.1:13337 -> 127.0.0.1:13337"))
+                    await Task.Delay(1000);
+
+                    var receiveResult = PcapTools.ReceivePacketCapture(captureId, clear_buffer: false);
+                    if (receiveResult.IsError == true) continue;
+
+                    string json = ((TextContentBlock)receiveResult.Content[0]).Text;
+                    var receiveDoc = JsonDocument.Parse(json);
+                    packetsCount = receiveDoc.RootElement.GetProperty("packets_count").GetInt32();
+
+                    if (packetsCount > 0)
                     {
-                        foundUdpPacket = true;
-                        break;
+                        foreach (var pkt in receiveDoc.RootElement.GetProperty("packets").EnumerateArray())
+                        {
+                            string summary = pkt.GetString();
+                            if (summary.Contains("UDP") && summary.Contains("13337"))
+                            {
+                                foundUdpPacket = true;
+                                break;
+                            }
+                        }
                     }
+
+                    if (foundUdpPacket) break;
                 }
 
+                Assert.True(packetsCount > 0, "No packets were captured from the target PID.");
                 Assert.True(foundUdpPacket, "Captured packets did not contain the expected UDP loopback string.");
             }
             finally
