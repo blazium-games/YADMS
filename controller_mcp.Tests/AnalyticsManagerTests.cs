@@ -43,5 +43,7 @@ namespace controller_mcp.Tests
 
             Assert.Equal(iterations * bytesPerRequest, AnalyticsManager.Current.TotalBytesSent);
         }
+    
+        [Fact] public void AnalyticsManager_LogToolInvocation_FailsGracefullyOnNull() { AnalyticsManager.TrackToolInvocation(null); Assert.True(AnalyticsManager.Current.TotalRequestsProcessed >= 0); }
     }
 }

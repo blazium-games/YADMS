@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Text.Json;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 using controller_mcp.Features.Tools;
 using ModelContextProtocol.Protocol;
@@ -53,5 +54,7 @@ namespace controller_mcp.Tests
             Assert.True(result.IsError);
             Assert.Contains("directory traversal sequences", ((TextContentBlock)result.Content[0]).Text);
         }
+    
+        [Fact] public async Task TerminalTools_RunCommand_FailsGracefullyOnInvalidCommand() { var result = TerminalTools.TerminalStart("NON_EXISTENT_COMMAND_XYZ", ""); Assert.True(result.IsError == true); }
     }
 }

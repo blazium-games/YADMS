@@ -61,5 +61,7 @@ namespace controller_mcp.Tests
             var stopRes = WatcherTools.StopDirectoryWatcher(watcherId);
             Assert.True(stopRes.IsError != true);
         }
+    
+        [Fact] public void WatcherTools_StartWatching_FailsGracefullyOnInvalidPath() { var result = WatcherTools.StartDirectoryWatcher("Z:\\invalid\\path"); Assert.True(result.IsError == true); }
     }
 }

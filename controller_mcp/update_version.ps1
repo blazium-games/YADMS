@@ -39,3 +39,11 @@ if ($versionChanged) {
     }
     Write-Host "Build complete for version $newVersion (No version bump requested)"
 }
+
+$assemblyInfo = "Properties\AssemblyInfo.cs"
+if (Test-Path $assemblyInfo) {
+    $content = Get-Content $assemblyInfo -Raw
+    $content = $content -replace '\[assembly: AssemblyVersion\(".*"\)\]', "[assembly: AssemblyVersion(`"$newVersion.0`")]"
+    $content = $content -replace '\[assembly: AssemblyFileVersion\(".*"\)\]', "[assembly: AssemblyFileVersion(`"$newVersion.0`")]"
+    Set-Content -Path $assemblyInfo -Value $content -NoNewline
+}

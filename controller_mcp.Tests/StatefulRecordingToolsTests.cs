@@ -1,5 +1,6 @@
 using System;
 using Xunit;
+using ModelContextProtocol.Protocol;
 using controller_mcp.Features.Tools;
 using System.Diagnostics;
 

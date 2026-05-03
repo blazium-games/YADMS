@@ -47,6 +47,7 @@ namespace controller_mcp.Features.Tools
 
         public static void TrackToolInvocation(string toolName)
         {
+            if (string.IsNullOrWhiteSpace(toolName)) return;
             Current.ToolInvocations.AddOrUpdate(toolName, 1, (key, count) => count + 1);
             StateBackupManager.SaveState();
         }

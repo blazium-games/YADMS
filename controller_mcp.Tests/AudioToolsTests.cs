@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Xunit;
+using ModelContextProtocol.Protocol;
 using controller_mcp.Features.Tools;
 
 namespace controller_mcp.Tests
@@ -20,5 +21,7 @@ namespace controller_mcp.Tests
             Assert.True(result.IsError);
             Assert.Contains("directory traversal sequences", ((ModelContextProtocol.Protocol.TextContentBlock)result.Content[0]).Text);
         }
+    
+        
     }
 }

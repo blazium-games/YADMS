@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Xunit;
 using controller_mcp.Features.Tools;
 using ModelContextProtocol.Protocol;
@@ -37,5 +38,7 @@ namespace controller_mcp.Tests
             Assert.True(json.RootElement.TryGetProperty("unix_epoch", out _));
             Assert.True(json.RootElement.TryGetProperty("human_readable", out _));
         }
+    
+        [Fact] public async Task SystemTools_GetTimestamps_HandlesExceptions() { var result = SystemTools.GetTimestamps(); Assert.False(result.IsError == true); }
     }
 }

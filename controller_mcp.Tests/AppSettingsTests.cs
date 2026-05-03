@@ -57,5 +57,7 @@ namespace controller_mcp.Tests
             Assert.Equal("C:\\ffmpeg.exe", deserialized.FFmpegPath);
             Assert.Equal("C:\\logs", deserialized.LogDirectory);
         }
+    
+        [Fact] public void AppSettings_Load_FailsGracefullyOnCorruptedFile() { File.WriteAllText("config.json", "{invalid_json_!@#"); var res = AppSettings.Load(); Assert.NotNull(res); }
     }
 }

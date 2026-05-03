@@ -63,5 +63,7 @@ namespace controller_mcp.Tests
             // The exception should have been caught and logged, preventing a crash
             Assert.True(errorLogged, "The server should have caught the stream failure and logged it.");
         }
+    
+        [Fact] public async Task SseTransport_StartAsync_HandlesExceptions() { var transport = new HttpListenerSseServerTransport(-1); await Assert.ThrowsAnyAsync<Exception>(async () => await transport.StartAsync(new System.Threading.CancellationToken())); }
     }
 }

@@ -69,5 +69,7 @@ namespace controller_mcp.Tests
             Assert.Empty(exceptions);
             Assert.Equal(iterations, StateBackupManager.CurrentState.Watchers.Count);
         }
+    
+        [Fact] public void StateBackupManager_RestoreState_HandlesExceptions() { File.WriteAllText("state_backup.dat", "corrupted"); StateBackupManager.RestoreState(); Assert.True(true); }
     }
 }

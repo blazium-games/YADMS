@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Xunit;
+using ModelContextProtocol.Protocol;
 using controller_mcp.Features.Tools;
 
 namespace controller_mcp.Tests

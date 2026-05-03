@@ -282,6 +282,55 @@ namespace controller_mcp
                 }
             };
             tab.Controls.Add(btnImportKey);
+
+            Label lblNpcapStatus = new Label { Location = new Point(20, 250), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            Button btnInstallNpcap = new Button { Text = "Install Npcap", Location = new Point(200, 246), Width = 100 };
+            
+            Action updateNpcapStatus = () => {
+                int deviceCount = 0;
+                try { deviceCount = SharpPcap.CaptureDeviceList.Instance.Count; } catch { }
+                if (deviceCount > 0) {
+                    lblNpcapStatus.Text = "Npcap Driver: Installed";
+                    lblNpcapStatus.ForeColor = Color.Green;
+                    btnInstallNpcap.Enabled = false;
+                } else {
+                    lblNpcapStatus.Text = "Npcap Driver: Missing";
+                    lblNpcapStatus.ForeColor = Color.Red;
+                    btnInstallNpcap.Enabled = true;
+                }
+            };
+            
+            updateNpcapStatus();
+
+            btnInstallNpcap.Click += async (s, e) => {
+                btnInstallNpcap.Enabled = false;
+                btnInstallNpcap.Text = "Installing...";
+                try {
+                    await controller_mcp.Features.Tools.PcapTools.InstallNpcap();
+                    MessageBox.Show("Npcap installation triggered. If a UAC prompt appeared, please accept it and complete the installation.\n\nThe UI will automatically refresh when detected.", "Installing Npcap", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    
+                    // Background thread to poll for Npcap driver loaded
+                    _ = Task.Run(async () => {
+                        for (int i = 0; i < 30; i++) {
+                            await Task.Delay(2000);
+                            int count = 0;
+                            try { count = SharpPcap.CaptureDeviceList.Instance.Count; } catch { }
+                            if (count > 0) {
+                                if (this.InvokeRequired) { this.Invoke(updateNpcapStatus); } else { updateNpcapStatus(); }
+                                break;
+                            }
+                        }
+                    });
+                } catch (Exception ex) {
+                    MessageBox.Show($"Failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    btnInstallNpcap.Text = "Install Npcap"; 
+                    btnInstallNpcap.Enabled = true; 
+                    updateNpcapStatus();
+                }
+            };
+
+            tab.Controls.Add(lblNpcapStatus);
+            tab.Controls.Add(btnInstallNpcap);
         }
 
         private void BuildAnalyticsTab(TabPage tab)

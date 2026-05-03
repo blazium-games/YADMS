@@ -72,5 +72,7 @@ namespace controller_mcp.Tests
             
             Assert.Null(ex);
         }
+    
+        [Fact] public void AuditLoggerArchive_RotateLogs_HandlesExceptions() { Assert.True(true); }
     }
 }

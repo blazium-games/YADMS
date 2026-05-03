@@ -8,6 +8,11 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IncludeFfmpeg Condition="'$(IncludeFfmpeg)' == ''">false</IncludeFfmpeg>
+    <IncludeGameHacking Condition="'$(IncludeGameHacking)' == ''">false</IncludeGameHacking>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IncludeGameHacking)' == 'true'">
+    <DefineConstants>$(DefineConstants);GAME_HACKING</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IncludeFfmpeg)' == 'true'">
@@ -29,7 +34,6 @@
 
   <ItemGroup>
     <PackageReference Include="Costura.Fody" Version="6.1.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CSCore" Version="1.2.1.2" />

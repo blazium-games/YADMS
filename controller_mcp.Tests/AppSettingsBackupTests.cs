@@ -3,6 +3,8 @@ using System.IO;
 using Xunit;
 using controller_mcp;
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace controller_mcp.Tests
 {
     public class AppSettingsBackupTests
@@ -45,5 +47,7 @@ namespace controller_mcp.Tests
             Assert.True(loaded.EnableDebugLogging);
             Assert.Equal("BACKUP_VALUE", loaded.FFmpegPath);
         }
+    
+        [Fact] public void AppSettingsBackup_Load_FailsGracefullyOnCorruptedFile() { File.WriteAllText("config.json", "{invalid_json_!@#"); var res = AppSettings.Load(); Assert.NotNull(res); }
     }
 }

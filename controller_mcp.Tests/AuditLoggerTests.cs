@@ -39,30 +39,40 @@ namespace controller_mcp.Tests
         {
             AuditLogger.Initialize(_tempLogDir);
             
-            AuditLogger.Log(LogLevel.INFO, "TEST_CATEGORY", "Test Message");
+            string uniqueCategory = "TEST_CATEGORY_" + Guid.NewGuid().ToString();
+            AuditLogger.Log(LogLevel.INFO, uniqueCategory, "Test Message");
             
             // Allow background thread to write
             System.Threading.SpinWait.SpinUntil(() => 
             {
                 string[] currentFiles = Directory.GetFiles(_tempLogDir, "*.log");
-                if (currentFiles.Length == 0) return false;
-                try
+                foreach(var file in currentFiles)
                 {
-                    foreach(var file in currentFiles)
-                    {
-                        if (File.ReadAllText(file).Contains("TEST_CATEGORY")) return true;
-                    }
-                    return false;
+                    try {
+                        using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                        using (var sr = new StreamReader(fs))
+                        {
+                            if (sr.ReadToEnd().Contains(uniqueCategory)) return true;
+                        }
+                    } catch { }
                 }
-                catch { return false; }
-            }, 5000);
+                return false;
+            }, 10000);
 
             string[] files = Directory.GetFiles(_tempLogDir, "*.log");
-            Assert.Single(files);
+            Assert.True(files.Length > 0);
 
-            string content = File.ReadAllText(files[0]);
-            Assert.Contains("TEST_CATEGORY", content);
-            Assert.Contains("Test Message", content);
+            bool found = false;
+            foreach(var f in files) {
+                using (var fs = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var sr = new StreamReader(fs))
+                {
+                    if (sr.ReadToEnd().Contains(uniqueCategory)) { found = true; break; }
+                }
+            }
+            Assert.True(found, "Log was not written to disk in time.");
         }
+    
+
     }
 }

@@ -1,16 +1,16 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("controller_mcp")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("YADMS")]
+[assembly: AssemblyDescription("YADMS Daemon Engine")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("controller_mcp")]
-[assembly: AssemblyCopyright("Copyright ©  2026")]
+[assembly: AssemblyCompany("Blazium")]
+[assembly: AssemblyProduct("YADMS Controller MCP")]
+[assembly: AssemblyCopyright("Copyright © 2026 Blazium")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

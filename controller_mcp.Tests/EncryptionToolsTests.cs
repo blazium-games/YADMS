@@ -1,5 +1,6 @@
 using System;
 using Xunit;
+using ModelContextProtocol.Protocol;
 using controller_mcp.Features.Tools;
 using System.Text.Json;
 
@@ -38,5 +39,7 @@ namespace controller_mcp.Tests
 
             Assert.Equal(64, hash.Length); // SHA256 hex is 64 chars
         }
+    
+        [Fact] public void EncryptionTools_Decrypt_FailsGracefullyOnInvalidBase64() { var result = EncryptionTools.AesDecrypt("invalid", "invalid"); Assert.True(result.IsError == true); }
     }
 }

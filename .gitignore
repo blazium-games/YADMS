@@ -13,6 +13,8 @@ x86/
 bld/
 [Bb]in/
 [Oo]bj/
+artifacts/
+installers/
 [Ll]og/
 [Ll]ogs/
 
@@ -28,6 +30,9 @@ ffmpeg.exe
 *.zip
 *.log
 *.bak
+*.dmp
+LICENSE.txt
+SOCIALS.txt
 
 # Test and Debug Output
 TestResults/

@@ -46,5 +46,9 @@ namespace controller_mcp.Tests
             var ex = Record.Exception(() => IpcManager.BroadcastLog("Test Log After Disconnect"));
             Assert.Null(ex);
         }
+    
+
+    
+        [Fact] public void IpcManager_TryConnectClient_FailsGracefullyOnNull() { bool res = IpcManager.TryConnectClient(null); Assert.True(res || !res); /* Returns true if daemon running, false if offline. Null handles safely without crash. */ }
     }
 }

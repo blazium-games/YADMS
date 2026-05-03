@@ -18,5 +18,7 @@ namespace controller_mcp.Tests
             Assert.True(result.IsError);
             Assert.Contains("directory traversal sequences", ((TextContentBlock)result.Content[0]).Text);
         }
+    
+        [Fact] public async Task SandboxTools_Execute_FailsGracefullyOnInvalidPath() { var result = await SandboxTools.LaunchSandboxedProcess("Z:\\invalid\\path.exe"); Assert.True(result.IsError == true); }
     }
 }
