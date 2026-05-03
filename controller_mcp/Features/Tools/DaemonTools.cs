@@ -33,5 +33,41 @@ namespace controller_mcp.Features.Tools
                 return new CallToolResult { IsError = true, Content = new List<ContentBlock> { new TextContentBlock { Text = $"Failed to install daemon: {ex.Message}" } } };
             }
         }
+        [McpServerTool, Description("Uninstalls the background Daemon so it no longer runs automatically on logon.")]
+        public static CallToolResult RemoveAsService()
+        {
+            try
+            {
+                using (RegistryKey rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                {
+                    if (rk.GetValue("ControllerMcpDaemon") != null)
+                        rk.DeleteValue("ControllerMcpDaemon", false);
+                }
+                
+                return new CallToolResult
+                {
+                    Content = new List<ContentBlock> { new TextContentBlock { Text = "Successfully removed Controller MCP from background startup." } }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new CallToolResult { IsError = true, Content = new List<ContentBlock> { new TextContentBlock { Text = $"Failed to remove daemon: {ex.Message}" } } };
+            }
+        }
+
+        public static bool IsServiceInstalled()
+        {
+            try
+            {
+                using (RegistryKey rk = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", false))
+                {
+                    return rk != null && rk.GetValue("ControllerMcpDaemon") != null;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

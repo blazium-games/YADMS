@@ -160,7 +160,7 @@ namespace controller_mcp.Features.Tools
             }
         }
 
-        [McpServerTool, Description("Downloads and silently installs the Npcap driver required for raw packet sniffing. Must be run as Administrator if UAC prompts.")]
+        [McpServerTool, Description("Downloads and installs the Npcap driver required for raw packet sniffing. Must be run as Administrator if UAC prompts.")]
         public static async Task<CallToolResult> InstallNpcap()
         {
             return await Task.Run(async () =>
@@ -170,25 +170,36 @@ namespace controller_mcp.Features.Tools
                     string url = "https://npcap.com/dist/npcap-1.79.exe";
                     string exePath = Path.Combine(Environment.CurrentDirectory, "npcap-installer.exe");
 
+                    AuditLogger.LogSystemEvent("NpcapInstaller", "Downloading Npcap 1.79 from official servers...");
+
                     using (HttpClient client = new HttpClient())
                     {
                         var bytes = await client.GetByteArrayAsync(url);
                         File.WriteAllBytes(exePath, bytes);
                     }
 
+                    AuditLogger.LogSystemEvent("NpcapInstaller", "Download complete. Launching installer...");
+
                     var psi = new ProcessStartInfo
                     {
                         FileName = exePath,
-                        Arguments = "/S", // Silent install
                         UseShellExecute = true,
                         Verb = "runas" // Elevate privileges
                     };
-                    Process.Start(psi)?.WaitForExit();
+                    
+                    var proc = Process.Start(psi);
+                    if (proc != null)
+                    {
+                        AuditLogger.LogSystemEvent("NpcapInstaller", "Waiting for user to complete the installation wizard...");
+                        proc.WaitForExit();
+                        AuditLogger.LogSystemEvent("NpcapInstaller", $"Installer closed (Exit Code: {proc.ExitCode}). Checking driver status...");
+                    }
 
-                    return new CallToolResult { Content = new List<ContentBlock> { new TextContentBlock { Text = "Npcap driver installation triggered. If a UAC prompt appeared, please accept it." } } };
+                    return new CallToolResult { Content = new List<ContentBlock> { new TextContentBlock { Text = "Npcap driver installation triggered. Please check logs for completion status." } } };
                 }
                 catch (Exception ex)
                 {
+                    AuditLogger.LogSystemEvent("NpcapInstaller", $"Installation failed: {ex.Message}");
                     return new CallToolResult { IsError = true, Content = new List<ContentBlock> { new TextContentBlock { Text = $"Failed to install Npcap: {ex.Message}" } } };
                 }
             });

@@ -54,10 +54,12 @@ namespace controller_mcp
                 if (IpcManager.TryConnectClient(Log))
                 {
                     _isMirror = true;
-                    btnStart.Text = "Mirror Mode";
+                    btnStart.Text = "Mirror Mode (Active)";
                     btnStart.Enabled = false;
                     btnStop.Enabled = true;
                     txtPort.Enabled = false;
+                    lblStatus.Text = "Connected to Daemon";
+                    lblStatus.ForeColor = Color.Blue;
                 }
             }
         }
@@ -95,6 +97,9 @@ namespace controller_mcp
             tabLogs.Controls.Add(this.txtConfig);
             tabLogs.Controls.Add(this.lblConfig);
             tabLogs.Controls.Add(this.btnCopyConfig);
+
+            Label lblDaemon = new Label { Text = "Daemon Installed: " + (controller_mcp.Features.Tools.DaemonTools.IsServiceInstalled() ? "Yes" : "No"), Location = new Point(500, 17), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold), ForeColor = controller_mcp.Features.Tools.DaemonTools.IsServiceInstalled() ? Color.Green : Color.Gray };
+            tabLogs.Controls.Add(lblDaemon);
 
             TabPage tabAnalytics = new TabPage("Analytics");
 
@@ -358,8 +363,24 @@ namespace controller_mcp
             };
             tab.Controls.Add(btnImportKey);
 
-            Label lblNpcapStatus = new Label { Location = new Point(20, 250), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
-            Button btnInstallNpcap = new Button { Text = "Install Npcap", Location = new Point(200, 246), Width = 100 };
+            Button btnInstallDaemon = new Button { Text = "Install Background Daemon", Location = new Point(20, 250), Width = 160 };
+            btnInstallDaemon.Click += (s, e) => {
+                var res = controller_mcp.Features.Tools.DaemonTools.InstallAsService();
+                if (res.IsError == true) MessageBox.Show("Failed to install Daemon. Please run as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                else MessageBox.Show("Daemon installed successfully. It will automatically start when you log in.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            };
+            tab.Controls.Add(btnInstallDaemon);
+
+            Button btnRemoveDaemon = new Button { Text = "Remove Background Daemon", Location = new Point(190, 250), Width = 160 };
+            btnRemoveDaemon.Click += (s, e) => {
+                var res = controller_mcp.Features.Tools.DaemonTools.RemoveAsService();
+                if (res.IsError == true) MessageBox.Show("Failed to remove Daemon. Please run as Administrator.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                else MessageBox.Show("Daemon removed from background startup.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            };
+            tab.Controls.Add(btnRemoveDaemon);
+
+            Label lblNpcapStatus = new Label { Location = new Point(20, 290), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            Button btnInstallNpcap = new Button { Text = "Install Npcap", Location = new Point(200, 286), Width = 100 };
             
             Action updateNpcapStatus = () => {
                 int deviceCount = 0;
@@ -477,7 +498,6 @@ namespace controller_mcp
             
             var menu = new ContextMenu();
             menu.MenuItems.Add("Show", (s, e) => { this.Show(); this.WindowState = FormWindowState.Normal; this.Opacity = 1; this.ShowInTaskbar = true; });
-            menu.MenuItems.Add("Install as Daemon", (s, e) => { controller_mcp.Features.Tools.DaemonTools.InstallAsService(); });
             menu.MenuItems.Add("Exit", (s, e) => { Application.Exit(); });
             
             _notifyIcon.ContextMenu = menu;
@@ -631,7 +651,26 @@ namespace controller_mcp
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            GracefulShutdown();
+            if (_isMirror)
+            {
+                var result = MessageBox.Show("Are you sure you want to kill the Background Daemon?", "Kill Daemon", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (result == DialogResult.Yes)
+                {
+                    IpcManager.SendCommand("EXIT");
+                    Log("Sent EXIT command to Daemon.");
+                    _isMirror = false;
+                    btnStart.Text = "Start";
+                    btnStart.Enabled = true;
+                    btnStop.Enabled = false;
+                    txtPort.Enabled = true;
+                    lblStatus.Text = "Offline";
+                    lblStatus.ForeColor = Color.Red;
+                }
+            }
+            else
+            {
+                GracefulShutdown();
+            }
         }
 
         public void GracefulShutdown()
