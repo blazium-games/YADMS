@@ -1,0 +1,21 @@
+====================================================================
+                       Welcome to Blazium!
+====================================================================
+
+Thank you for installing the YADMS Daemon! If you need help, want
+to report a bug, or just want to join the community, please check 
+out our official social channels below:
+
+• Official Website:
+  https://blazium.app/
+
+• Join the Community on Discord:
+  https://discord.gg/Vbq4zGdaVs
+
+• Follow us on X/Twitter:
+  https://x.com/BlaziumGames
+
+• View the Source Code on GitHub:
+  https://github.com/blazium-games/
+
+====================================================================
