@@ -403,25 +403,22 @@ namespace controller_mcp
                 btnInstallNpcap.Text = "Installing...";
                 try {
                     await controller_mcp.Features.Tools.PcapTools.InstallNpcap();
-                    MessageBox.Show("Npcap installation triggered. If a UAC prompt appeared, please accept it and complete the installation.\n\nThe UI will automatically refresh when detected.", "Installing Npcap", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     
-                    // Background thread to poll for Npcap driver loaded
-                    _ = Task.Run(async () => {
-                        for (int i = 0; i < 30; i++) {
-                            await Task.Delay(2000);
-                            int count = 0;
-                            try { count = SharpPcap.CaptureDeviceList.Instance.Count; } catch { }
-                            if (count > 0) {
-                                if (this.InvokeRequired) { this.Invoke(updateNpcapStatus); } else { updateNpcapStatus(); }
-                                break;
-                            }
-                        }
-                    });
+                    bool isInstalled = System.IO.File.Exists(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Npcap", "wpcap.dll"));
+                    if (isInstalled) {
+                        lblNpcapStatus.Text = "Npcap Driver: Installed";
+                        lblNpcapStatus.ForeColor = Color.Green;
+                        btnInstallNpcap.Enabled = false;
+                        MessageBox.Show("Npcap installation completed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    } else {
+                        MessageBox.Show("Npcap installation was aborted or failed.", "Installation Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        btnInstallNpcap.Text = "Install Npcap";
+                        btnInstallNpcap.Enabled = true;
+                    }
                 } catch (Exception ex) {
                     MessageBox.Show($"Failed: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     btnInstallNpcap.Text = "Install Npcap"; 
                     btnInstallNpcap.Enabled = true; 
-                    updateNpcapStatus();
                 }
             };
 

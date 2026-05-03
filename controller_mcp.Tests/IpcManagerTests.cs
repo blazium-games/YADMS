@@ -11,10 +11,10 @@ namespace controller_mcp.Tests
         [Fact]
         public void TryConnectClient_BackgroundLoop_DoesNotCrashWhenOffline()
         {
-            // The method kicks off a background task that polls infinitely.
+            // The method synchronously attempts to connect. If the daemon is offline, it returns false.
             // We just ensure the initialization succeeds and doesn't throw unhandled exceptions.
             bool result = IpcManager.TryConnectClient((msg) => { });
-            Assert.True(result);
+            Assert.False(result);
         }
 
         [Fact]

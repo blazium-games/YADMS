@@ -192,10 +192,19 @@ namespace controller_mcp.Features.Tools
                     {
                         AuditLogger.LogSystemEvent("NpcapInstaller", "Waiting for user to complete the installation wizard...");
                         proc.WaitForExit();
-                        AuditLogger.LogSystemEvent("NpcapInstaller", $"Installer closed (Exit Code: {proc.ExitCode}). Checking driver status...");
+                        
+                        bool isInstalled = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "Npcap", "wpcap.dll"));
+                        if (isInstalled)
+                        {
+                            AuditLogger.LogSystemEvent("NpcapInstaller", "Success! Npcap driver was successfully installed.");
+                        }
+                        else
+                        {
+                            AuditLogger.LogSystemEvent("NpcapInstaller", "Npcap installation aborted or failed. Driver not found.");
+                        }
                     }
 
-                    return new CallToolResult { Content = new List<ContentBlock> { new TextContentBlock { Text = "Npcap driver installation triggered. Please check logs for completion status." } } };
+                    return new CallToolResult { Content = new List<ContentBlock> { new TextContentBlock { Text = "Npcap driver installation completed. Please check logs for status." } } };
                 }
                 catch (Exception ex)
                 {
