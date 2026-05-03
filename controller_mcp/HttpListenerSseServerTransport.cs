@@ -54,9 +54,16 @@ namespace controller_mcp
                 {
                     // Ignore expected exception on shutdown
                 }
+                catch (ObjectDisposedException)
+                {
+                    // Ignore expected exception on shutdown when the listener is disposed
+                }
                 catch (Exception ex)
                 {
-                    OnLog?.Invoke($"Error accepting connection: {ex.Message}");
+                    if (!ct.IsCancellationRequested)
+                    {
+                        OnLog?.Invoke($"Error accepting connection: {ex.Message}");
+                    }
                 }
             }
         }
