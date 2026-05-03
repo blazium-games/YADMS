@@ -50,12 +50,12 @@ jobs:
               exit 1
           }
 
-      - name: Create Draft Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
           name: YADMS Release v${{ env.VERSION }}
-          draft: true
+          draft: false
           prerelease: false
           files: |
             controller_mcp/installers/*.exe
