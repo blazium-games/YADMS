@@ -81,36 +81,43 @@ namespace controller_mcp
 
         public static bool TryConnectClient(Action<string> onLogReceived)
         {
-            Task.Run(async () =>
+            try
             {
-                while (true)
+                var clientStream = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+                clientStream.Connect(500); // Synchronously attempt to connect with 500ms timeout
+                
+                clientStream.ReadMode = PipeTransmissionMode.Message;
+                _clientWriter = new StreamWriter(clientStream) { AutoFlush = true };
+
+                Task.Run(async () =>
                 {
                     try
                     {
-                        using (var clientStream = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
+                        var reader = new StreamReader(clientStream);
+                        while (!reader.EndOfStream)
                         {
-                            await clientStream.ConnectAsync(1000);
-                            clientStream.ReadMode = PipeTransmissionMode.Message;
-                            _clientWriter = new StreamWriter(clientStream) { AutoFlush = true };
-
-                            var reader = new StreamReader(clientStream);
-                            while (!reader.EndOfStream)
+                            string line = await reader.ReadLineAsync();
+                            if (line != null && line.StartsWith("LOG:"))
                             {
-                                string line = await reader.ReadLineAsync();
-                                if (line != null && line.StartsWith("LOG:"))
-                                {
-                                    onLogReceived?.Invoke(line.Substring(4));
-                                }
+                                onLogReceived?.Invoke(line.Substring(4));
                             }
                         }
                     }
-                    catch { } // Disconnected or connection refused
-                    
-                    _clientWriter = null;
-                    await Task.Delay(2000); // Wait 2 seconds before attempting reconnect
-                }
-            });
-            return true;
+                    catch { } // Disconnected
+                    finally
+                    {
+                        clientStream.Dispose();
+                        _clientWriter = null;
+                    }
+                });
+                
+                return true;
+            }
+            catch
+            {
+                // Connection failed or timed out. No daemon is running.
+                return false;
+            }
         }
 
         public static void SendCommand(string command)
