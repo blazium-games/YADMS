@@ -24,6 +24,10 @@ AppUpdatesURL=https://github.com/blazium-games/
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "installservice"; Description: "Install YADMS as a background Daemon (Runs silently on Startup)"; GroupDescription: "Background Service"
+
+[Registry]
+Root: HKCU; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "ControllerMcpDaemon"; ValueData: """{app}\{#AppExeName}"" --daemon"; Tasks: installservice; Flags: uninsdeletevalue
 
 [Files]
 Source: "artifacts\{#SkuName}\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion

@@ -549,21 +549,7 @@ namespace controller_mcp
                 return;
             }
 
-            rtbLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
-            
-            if (rtbLog.Lines.Length > 5000)
-            {
-                rtbLog.Select(0, rtbLog.GetFirstCharIndexFromLine(rtbLog.Lines.Length - 5000));
-                rtbLog.SelectedText = "";
-            }
-            
-            rtbLog.SelectionStart = rtbLog.Text.Length;
-            rtbLog.ScrollToCaret();
-
             controller_mcp.Features.Tools.AuditLogger.LogSystemEvent("DebugConsole", message);
-
-            if (_isDaemon)
-                IpcManager.BroadcastLog(message);
         }
 
         public void ShowBalloonTip(string title, string message)
